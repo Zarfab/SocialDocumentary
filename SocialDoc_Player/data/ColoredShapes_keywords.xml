@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<class>
+   <primary>
+		<keyword tag="0">cyan</keyword>
+		<keyword tag="1">magenta</keyword>
+		<keyword tag="2">yellow</keyword>
+	</primary>
+	<secondary>
+		<keyword tag="10">green</keyword>
+		<keyword tag="11">orange</keyword>
+		<keyword tag="12">purple</keyword>
+	</secondary>
+	<other>
+		<keyword tag="20">white</keyword>
+		<keyword tag="21">lightGrey</keyword>
+		<keyword tag="22">darkGrey</keyword>
+		<keyword tag="23">blue</keyword>
+		<keyword tag="24">red</keyword>
+	</other>
+</class>

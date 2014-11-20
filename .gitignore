@@ -3,6 +3,7 @@
 
 # media content
 SocialDoc_Player/data/*Doc*
+*.avi
 
 #OS junk files
 [Tt]humbs.db

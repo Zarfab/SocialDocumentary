@@ -1,7 +1,11 @@
 // and declare a TuioProcessing client variable
 import TUIO.*;
 import java.util.Vector;
+import oscP5.*;
+import netP5.*;
+
 TuioProcessing tuioClient;
+OscP5 oscP5;
 
 // these are some helper variables which are used
 // to create scalable graphical feedback
@@ -24,15 +28,23 @@ PImage[] img_people;
 PImage[] img_emotion;
 PImage[] img_action;
 
-PImage img_logo;
+PImage img_logo, ltv_logo;
+
+EnrichmentManager enrichments;
+int videoRelevance = 0;
+boolean forceImageUpdate = false;
 
 boolean sketchFullScreen(){
   return true;
+  //return false;
 }
 
 void setup()
 {
-  size(displayWidth,displayHeight);
+  if(sketchFullScreen())
+    size(displayWidth,displayHeight);
+  else
+    size(920, 690);
   noStroke();
   fill(0);
   
@@ -45,7 +57,10 @@ void setup()
   // we create an instance of the TuioProcessing client
   // since we add "this" class as an argument the TuioProcessing class expects
   // an implementation of the TUIO callback methods (see below)
-  tuioClient  = new TuioProcessing(this);
+  tuioClient  = new TuioProcessing(this, 3334);
+  
+  // communication with the main player
+  oscP5 = new OscP5(this,11999);
 
   // people = cyan
   // emotion = yellow 
@@ -71,6 +86,11 @@ void setup()
   }
   
   img_logo = loadImage("SocialDocumentary.png");
+  ltv_logo = loadImage("LinkedTV_WholeLogo.png");
+  ltv_logo.resize(0, img_logo.height);
+  
+  
+  enrichments = new EnrichmentManager(dataPath("MediaEnrichment"));
    
 }
 
@@ -85,47 +105,38 @@ void draw()
   //display logo
   imageMode(CORNERS);
   image(img_logo, sketchTopLeftX, sketchTopLeftY);
+  image(ltv_logo, width-ltv_logo.width, sketchTopLeftY);
+  
+  // display a circle for interaction zone
+  switch(videoRelevance) {
+    case 1: stroke(156, 48, 48);
+      break;
+    case 2: stroke(176, 156, 0);
+      break;
+    case 3: stroke(48, 156, 48);
+      break;
+    default: 
+      stroke(127);
+      break;
+  }
+  noFill();
+  strokeWeight(videoRelevance*3+1);
+  ellipse(width*0.5, height*0.6, width*0.6, height*0.6);
   
   imageMode(CENTER); 
+  noStroke();
    
   Vector tuioObjectList = tuioClient.getTuioObjects();
   
   for (int i=0;i<tuioObjectList.size();i++) {
      TuioObject tobj = (TuioObject)tuioObjectList.elementAt(i);
      int id = tobj.getSymbolID();     
-       
-     // Draw relation lines: 
-     // only different categories can have a distance relation with
-     // eachother. each object is belonging to a different 
-     // category by definition
-     /*if (tuioObjectList.size() > 1){
-       int x = tobj.getScreenX(width);
-       int y = tobj.getScreenY(height);
-        for (int j = i+1; j < tuioObjectList.size(); j++) {
-          TuioObject tobjNext = (TuioObject)tuioObjectList.elementAt(j);
-          int nextX = tobjNext.getScreenX(width);
-          int nextY = tobjNext.getScreenY(height);
-        
-          float d = dist(x, y, nextX, nextY);
-          //println("Dist [" + i + "," + j + "] = " + d); 
-          
-         if (tobj.getTuioState() == TuioCursor.TUIO_STOPPED && 
-              tobjNext.getTuioState() == TuioCursor.TUIO_STOPPED && 
-              d < 600) {
-                pushMatrix();
-                   color c1 = #FBF9ED;
-                   stroke(c1);
-                   line(x, y, nextX, nextY);    
-                popMatrix();            
-          }
-       }
-     }*/
      
-     //int y_offset = -23;
-     int y_offset = 0;
+     float x_translate = tobj.getScreenX(width);// + (width-tobj.getScreenX(width))*0.1;
+     float y_translate = tobj.getScreenY(height);
      pushMatrix();
-       translate(tobj.getScreenX(width),tobj.getScreenY(height) + y_offset);
-       rotate(-tobj.getAngle());
+       translate(x_translate, y_translate);
+       rotate(tobj.getAngle());
        smooth(4);
        
        
@@ -142,10 +153,30 @@ void draw()
          image(img_emotion[id%6], 0, 0);
        }  
      popMatrix();
-   
+     
+
+     enrichments.selectImages(tuioObjectList, forceImageUpdate);
+     enrichments.displaySelection();
+     if(forceImageUpdate)
+       forceImageUpdate = false;
    }
-   
+
 }
+
+// OSC callback
+void oscEvent(OscMessage mes) {
+  /* print the address pattern and the typetag of the received OscMessage */
+  //print("### received an osc message.");
+  //print(" addrpattern: "+ mes.addrPattern());
+  //print(" argType: "+ mes.typetag() + "\n");
+  
+  if(mes.checkAddrPattern("/video/relevance")==true) {
+    videoRelevance = mes.get(0).intValue();
+    forceImageUpdate = true;
+  }
+}
+
+
 
 
 // these callback methods are called whenever a TUIO event occurs

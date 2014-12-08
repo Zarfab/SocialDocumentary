@@ -1,6 +1,10 @@
 # old version
 *.zip
 
+# script files
+*.bat
+*.au3
+
 # media content
 SocialDoc_Player/data/*Doc*
 *.avi

@@ -22,6 +22,7 @@ TuioProcessing tuioClient;
 TuioObjectsManager tuioManager;
 OscP5 oscP5;
 NetAddress KISDapp;
+NetAddress tableApp;
 
 // users variables
 int nbViewers;
@@ -60,17 +61,19 @@ void setup() {
   if(sketchFullScreen())
     size(displayWidth, displayHeight);
   else
-    size(640, 400);
+    size(920, 690);
   frameRate(25);
   
-  videoFilePath = "default"; 
-  selectInput("Select a video file to use:", "videoFileSelected");
-  while(videoFilePath.equals("default")) {
-    delay(50);
-  }
-  if(videoFilePath.equals("")) {
-    videoFilePath = dataPath("SocialDoc_sample.mp4");
-  }
+//  videoFilePath = "default"; 
+//  selectInput("Select a video file to use:", "videoFileSelected");
+//  while(videoFilePath.equals("default")) {
+//    delay(50);
+//  }
+//  print("videoFilePath: "+videoFilePath+"\n");
+//  if(videoFilePath.equals("default")) {
+//    videoFilePath = dataPath("GeziParkDocumentary1.mp4");
+//  }
+  videoFilePath = dataPath("GeziParkDocumentary1.mp4");
   video = new Movie(this, videoFilePath);
   videoPlaying = false;
   videoWasPlaying = false;
@@ -109,13 +112,17 @@ void setup() {
   tweetManager = new TweetManager(tweetFilePath);
   
   /* start oscP5, listening for incoming messages at port 12000 */
+  // receive from Kinect attention tracker
   oscP5 = new OscP5(this,12000);
+  // send to Kinect attention tracker (reset timers)
   KISDapp = new NetAddress("127.0.0.1", 12001);
+  // send to table display (relevance and enrichment update)
+  tableApp = new NetAddress("127.0.0.1", 11999);
   
   // we create an instance of the TuioProcessing client
   // since we add "this" class as an argument the TuioProcessing class expects
   // an implementation of the TUIO callback methods (see below)
-  tuioClient  = new TuioProcessing(this);
+  tuioClient  = new TuioProcessing(this, 3335);
   tuioManager = new TuioObjectsManager();
   
   // ini users
@@ -260,12 +267,19 @@ void updateSegment() {
   s += " at " + segManager.getCurrentSegment().getStartTime();
   print(s + "\n");
   
+  sendRelevanceMessage();
   sendNextMessage();
 }
 
 void sendNextMessage() {
   OscMessage resetMessage = new OscMessage("/player/next");
   oscP5.send(resetMessage, KISDapp);
+}
+
+void sendRelevanceMessage() {
+  OscMessage relevanceMessage = new OscMessage("/video/relevance");
+  relevanceMessage.add(segManager.getCurrentSegment().getRelevance());
+  oscP5.send(relevanceMessage, tableApp);
 }
 
 

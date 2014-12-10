@@ -61,7 +61,7 @@ void setup() {
   if(sketchFullScreen())
     size(displayWidth, displayHeight);
   else
-    size(920, 690);
+    size(800, 450);
   frameRate(25);
   
 //  videoFilePath = "default"; 
@@ -103,7 +103,7 @@ void setup() {
   
   srtFilePath = prefixFilePath + ".srt";
   segManager = new SegmentManager(srtFilePath);
-  segManager.calculateNewSegmentsList(new ArrayList<String>());
+  segManager.calculateNewSegmentsList(new ArrayList<String>(), new int[0]);
   
   keywordFilePath = prefixFilePath + "_keywords.xml";
   kwManager = new KeywordManager(keywordFilePath);
@@ -255,7 +255,7 @@ void updateKeywordList() {
   for(int i=0; i<kw.size(); i++) {
     s += " " + kw.get(i); }
   print(s+"\n");
-  segManager.calculateNewSegmentsList(kw);
+  segManager.calculateNewSegmentsList(kw, tuioManager.getTagsIDs());
 }
 
 void updateSegment() {
@@ -277,8 +277,12 @@ void sendNextMessage() {
 }
 
 void sendRelevanceMessage() {
-  OscMessage relevanceMessage = new OscMessage("/video/relevance");
+  OscMessage relevanceMessage = new OscMessage("/video/relevant_tags");
   relevanceMessage.add(segManager.getCurrentSegment().getRelevance());
+   ArrayList<Integer> relevantTags = segManager.getCurrentSegment().getRelevantTags();
+  for(int i=0; i<relevantTags.size(); i++) {
+    relevanceMessage.add(relevantTags.get(i));
+  }
   oscP5.send(relevanceMessage, tableApp);
 }
 

@@ -15,6 +15,7 @@ class SegmentManager {
  private Segment currentSeg;
  private String srtFilePath;
  private ArrayList<String> lastTags;
+ private  ArrayList<Integer> lastIds;
 
   
  private void init() {
@@ -27,6 +28,7 @@ class SegmentManager {
    currentSeg = new Segment();
    
    lastTags = new ArrayList<String>();
+   lastIds = new  ArrayList<Integer>();
  }
   
  public SegmentManager() {
@@ -70,7 +72,7 @@ class SegmentManager {
  }
 
 // to be called when a new list of tags is chosen by the user
- public void calculateNewSegmentsList(ArrayList<String> p_tags) {
+ public void calculateNewSegmentsList(ArrayList<String> p_tags, int[] p_ids) {
    
    // check if the tags are the same than previously and ignore the rest if true
    //if(lastTags.size() == p_tags.size()) {
@@ -90,11 +92,14 @@ class SegmentManager {
    // fill it with all the segment ordered by relevance
    for(int i=0; i<allSegments.size(); i++) {
      Segment seg = allSegments.get(i);
-     seg.calculateRelevance(p_tags);
+     seg.calculateRelevance(p_tags, p_ids);
      relevantSegments.get(seg.getRelevance()).add(seg);
    }
    
    lastTags = p_tags;
+   for(int i=0; i<p_ids.length; i++) {
+     lastIds.add(p_ids[i]);
+   }
  }
  
  // to be called when the player is at the end of a segment or when a new tag is chosen
@@ -108,9 +113,13 @@ class SegmentManager {
    
    // if relevant segment list is empty, fill it with the same keywords
    if(rel == 0 && relevantSegments.get(0).size() == 0) {
-     ArrayList<String> temp = lastTags;
+     ArrayList<String> tempTags = lastTags;
+     int[] tempIds = new int[lastIds.size()];
+     for(int i=0; i<tempIds.length; i++) {
+       tempIds[i] = lastIds.get(i);
+     }
      lastTags = new ArrayList<String>();
-     calculateNewSegmentsList(temp);
+     calculateNewSegmentsList(tempTags, tempIds);
    }
    
    // select a segment by roulette technic

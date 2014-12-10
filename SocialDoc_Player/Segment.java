@@ -9,6 +9,7 @@
   private int relevance;
   private ArrayList<String> tags;
   private String[] segmentStrings;
+  private ArrayList<Integer> relevantTags;
   
   
   // constructor by default
@@ -19,6 +20,7 @@
     endTime = (float)0.0;
     tags = new ArrayList<String>();
     segmentStrings = new String[3];
+    relevantTags = new  ArrayList<Integer>();
   }
   
   // constructor with all fields
@@ -39,6 +41,7 @@
     for(int i=0; i<p_tags.size(); i++)
       tags.add(p_tags.get(i));      
     //System.out.println(this.toString());
+    relevantTags = new  ArrayList<Integer>();
   }
    
    // re-convert the Segment object to a srt-type string for saving
@@ -72,20 +75,27 @@
      return relevance;
    }
    
+   public  ArrayList<Integer> getRelevantTags() {
+     return relevantTags;
+   }
+   
    public ArrayList<String> getTags() {
      return tags;
    }
    
    // return the relevance of this segment in relation with the list of chosen tags
-   public int calculateRelevance(ArrayList<String> p_newTags) {
+   public int calculateRelevance(ArrayList<String> p_newTags, int[] p_ids) {
      // TODO : 
      //      calculate and update relevance
      
      // simple version
      relevance = 0;
+     relevantTags.clear();
      for(int i=0; i<p_newTags.size(); i++) {
-       if(tags.contains(p_newTags.get(i)))
+       if(tags.contains(p_newTags.get(i))) {
          relevance++;
+         relevantTags.add(p_ids[i]);
+       }
      }
      if(relevance > 3)
        relevance = 3;

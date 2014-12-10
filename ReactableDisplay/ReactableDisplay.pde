@@ -27,6 +27,7 @@ int sketchTopLeftY = 12;
 PImage[] img_people;
 PImage[] img_emotion;
 PImage[] img_action;
+IntList activeTags;
 
 PImage img_logo, ltv_logo;
 
@@ -44,7 +45,7 @@ void setup()
   if(sketchFullScreen())
     size(displayWidth,displayHeight);
   else
-    size(920, 690);
+    size(800, 450);
   noStroke();
   fill(0);
   
@@ -71,9 +72,9 @@ void setup()
   // people_0.png
   // emotion_0.png
   // action_0.png
-  img_people = new PImage[6];
-  img_emotion = new PImage[6];
-  img_action = new PImage[6];
+  img_people = new PImage[12];
+  img_emotion = new PImage[12];
+  img_action = new PImage[12];
   
   
   for (int i = 0; i < 6; i++ ){
@@ -83,7 +84,15 @@ void setup()
     img_emotion[i].resize((int)(img_emotion[i].width*scale_factor), (int)(img_emotion[i].height*scale_factor));
     img_action[i] = loadImage("action_"+i+"b.png");
     img_action[i].resize((int)(img_action[i].width*scale_factor), (int)(img_action[i].height*scale_factor));
+    
+    img_people[i+6] = loadImage("people_"+i+"n.png");
+    img_people[i+6].resize((int)(img_people[i+6].width*scale_factor), (int)(img_people[i+6].height*scale_factor));
+    img_emotion[i+6] = loadImage("emotion_"+i+"n.png");
+    img_emotion[i+6].resize((int)(img_emotion[i+6].width*scale_factor), (int)(img_emotion[i+6].height*scale_factor));
+    img_action[i+6] = loadImage("action_"+i+"n.png");
+    img_action[i+6].resize((int)(img_action[i+6].width*scale_factor), (int)(img_action[i+6].height*scale_factor));
   }
+  activeTags = new IntList();
   
   img_logo = loadImage("SocialDocumentary.png");
   ltv_logo = loadImage("LinkedTV_WholeLogo.png");
@@ -142,15 +151,24 @@ void draw()
        
        if(id >= 0 && id < 6) // people
        {
-         image(img_people[id], 0, 0);
+         if(activeTags.hasValue(id))
+           image(img_people[id], 0, 0);
+         else
+           image(img_people[id+6], 0, 0);
        }
        if(id >= 6 && id < 12) //action
        {
-         image(img_action[id%6], 0, 0);
+         if(activeTags.hasValue(id))
+           image(img_action[id%6], 0, 0);
+         else
+           image(img_action[id%6+6], 0, 0);
        }
        if(id >= 12 && id < 18) // emotion
        {
-         image(img_emotion[id%6], 0, 0);
+         if(activeTags.hasValue(id))
+           image(img_emotion[id%6], 0, 0);
+         else
+           image(img_emotion[id%6+6], 0, 0);
        }  
      popMatrix();
      
@@ -170,8 +188,12 @@ void oscEvent(OscMessage mes) {
   //print(" addrpattern: "+ mes.addrPattern());
   //print(" argType: "+ mes.typetag() + "\n");
   
-  if(mes.checkAddrPattern("/video/relevance")==true) {
-    videoRelevance = mes.get(0).intValue();
+  if(mes.checkAddrPattern("/video/relevant_tags")==true) {
+    videoRelevance = mes.get(0).intValue(); // nb tags
+    activeTags.clear();
+    for(int i=0; i<videoRelevance; i++) {
+      activeTags.append(mes.get(i+1).intValue());
+    }
     forceImageUpdate = true;
   }
 }

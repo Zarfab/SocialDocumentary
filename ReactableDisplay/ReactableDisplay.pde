@@ -117,19 +117,9 @@ void draw()
   image(ltv_logo, width-ltv_logo.width, sketchTopLeftY);
   
   // display a circle for interaction zone
-  switch(videoRelevance) {
-    case 1: stroke(156, 48, 48);
-      break;
-    case 2: stroke(176, 156, 0);
-      break;
-    case 3: stroke(48, 156, 48);
-      break;
-    default: 
-      stroke(127);
-      break;
-  }
+  stroke(127);
+  strokeWeight(2);
   noFill();
-  strokeWeight(videoRelevance*3+1);
   ellipse(width*0.5, height*0.6, width*0.6, height*0.6);
   
   imageMode(CENTER); 

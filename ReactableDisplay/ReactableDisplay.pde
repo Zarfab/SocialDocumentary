@@ -183,7 +183,7 @@ void draw()
     
 
      enrichments.selectImages(tuioObjectList, forceImageUpdate);
-     //enrichments.displaySelection();
+     enrichments.displaySelection(offscreen);
      if(forceImageUpdate)
        forceImageUpdate = false;
    }

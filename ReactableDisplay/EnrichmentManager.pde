@@ -110,29 +110,29 @@ public class EnrichmentManager {
      }
   }
   
-  public void displaySelection() {
-    int sizeW = width/7;
+  public void displaySelection(PGraphics screen) {
+    int sizeW = screen.width/7;
     for(int i=0; i<selection.size() && i<4; i++) {
       int x, y;
       if(placesOnScreen.get(i) == 0) {
-        x = width/9;
-        y = height/3;
-        selection.get(i).drawAsPolaroid(x, y, sizeW);
+        x = screen.width/9;
+        y = screen.height/3;
+        selection.get(i).drawAsPolaroid(screen, x, y, sizeW);
       }
       if(placesOnScreen.get(i) == 1) {
-        x = 8*width/9;
-        y = 2*height/3;
-        selection.get(i).drawAsPolaroid(x, y, sizeW);
+        x = 8*screen.width/9;
+        y = 2*screen.height/3;
+        selection.get(i).drawAsPolaroid(screen, x, y, sizeW);
       }
       if(placesOnScreen.get(i) == 2) {
-        x = (int)(7.5*width/9);
-        y = (int)(height/3.2);
-        selection.get(i).drawAsPolaroid(x, y, sizeW);
+        x = (int)(7.5*screen.width/9);
+        y = (int)(screen.height/3.2);
+        selection.get(i).drawAsPolaroid(screen, x, y, sizeW);
       }
       if(placesOnScreen.get(i) == 3) {
-        x = width/9;
-        y = (int)(2.2*height/3);
-        selection.get(i).drawAsPolaroid(x, y, sizeW);
+        x = screen.width/9;
+        y = (int)(2.2*screen.height/3);
+        selection.get(i).drawAsPolaroid(screen, x, y, sizeW);
       }
     }
   }

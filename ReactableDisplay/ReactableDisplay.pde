@@ -1,8 +1,15 @@
-// and declare a TuioProcessing client variable
-import TUIO.*;
-import java.util.Vector;
-import oscP5.*;
-import netP5.*;
+import TUIO.*;                //TUIO library
+import java.util.Vector;      //
+import oscP5.*;               //OSC library
+import netP5.*;               //OSC
+import deadpixel.keystone.*;  //projection mapping library
+
+// calibration and projection mapping
+Keystone ks;
+CornerPinSurface surface;
+PGraphics offscreen;
+PImage pattern;
+boolean calibrationMode = false;
 
 TuioProcessing tuioClient;
 OscP5 oscP5;
@@ -14,14 +21,6 @@ float object_size = 60;
 float table_size = 920; // TODO: 46.5cm x 66.5cm
 float scale_factor;
 PFont font;
-
-// Sketch area
-// since we are losing some of the projection, sketch should be inside following area 
-// table projector resolution assumption: 1024x768
-int sketchTopLeftX = 0;
-int sketchTopLeftY = 12;
-//int sketchWidth = displayWidth - 59;
-//int sketchHeight = displayHeight - 129;
 
 
 PImage[] img_people;
@@ -42,18 +41,26 @@ boolean sketchFullScreen(){
 
 void setup()
 {
-  if(sketchFullScreen())
-    size(displayWidth,displayHeight);
-  else
-    size(800, 450);
-  noStroke();
-  fill(0);
+  if(sketchFullScreen()) {
+    size(displayWidth, displayHeight, P3D);
+  }
+  else {
+    size(640,480,P3D);
+  }
   
-  loop();
-  frameRate(30);
+  // projection mapping
+  ks = new Keystone(this);
+  float offscreenRatio = 0.6;
+  surface = ks.createCornerPinSurface((int)(width*offscreenRatio), (int)(height*offscreenRatio), 20);
+  offscreen = createGraphics((int)(width*offscreenRatio), (int)(height*offscreenRatio), P2D);
+  pattern = loadImage("pattern.png");
+  pattern.resize(offscreen.width, offscreen.height);
+  
+  //loop();
+  //frameRate(30);
   
   font = createFont("Arial", 18);
-  scale_factor = height/table_size;
+  scale_factor = offscreen.height/table_size;
   
   // we create an instance of the TuioProcessing client
   // since we add "this" class as an argument the TuioProcessing class expects
@@ -100,6 +107,8 @@ void setup()
   
   
   enrichments = new EnrichmentManager(dataPath("MediaEnrichment"));
+  
+  ks.load();
    
 }
 
@@ -108,67 +117,101 @@ void setup()
 // from the TuioProcessing client and then loop over both lists to draw the graphical feedback.
 void draw()
 {
-
+  // Convert the mouse coordinate into surface coordinates
+  // this will allow you to use mouse events inside the 
+  // surface from your screen. 
+  PVector surfaceMouse = surface.getTransformedMouse();
   background(0);
   
-  //display logo
-  imageMode(CORNERS);
-  image(img_logo, sketchTopLeftX, sketchTopLeftY);
-  image(ltv_logo, width-ltv_logo.width, sketchTopLeftY);
+  // Draw the scene, offscreen
+  offscreen.beginDraw();
+  offscreen.background(0);
   
-  // display a circle for interaction zone
-  stroke(127);
-  strokeWeight(2);
-  noFill();
-  ellipse(width*0.5, height*0.6, width*0.6, height*0.6);
+  if(calibrationMode) {
+    offscreen.fill(0, 255, 0);
+    offscreen.ellipse(surfaceMouse.x, surfaceMouse.y, 75, 75);
+    offscreen.image(pattern, offscreen.width/2, offscreen.height/2);
+  }
+  else {  
+    //display logo
+    offscreen.imageMode(CORNERS);
+    offscreen.image(img_logo, 0, 0);
+    offscreen.image(ltv_logo, offscreen.width-ltv_logo.width, 0);
   
-  imageMode(CENTER); 
-  noStroke();
+    // display a circle for interaction zone
+    offscreen.stroke(127);
+    offscreen.strokeWeight(2);
+    offscreen.noFill();
+    offscreen.ellipse(offscreen.width*0.5, offscreen.height*0.6, offscreen.width*0.6, offscreen.height*0.6);
+  
+    offscreen.imageMode(CENTER); 
+    offscreen.noStroke();
    
-  Vector tuioObjectList = tuioClient.getTuioObjects();
+    Vector tuioObjectList = tuioClient.getTuioObjects();
   
-  for (int i=0;i<tuioObjectList.size();i++) {
-     TuioObject tobj = (TuioObject)tuioObjectList.elementAt(i);
-     int id = tobj.getSymbolID();     
+    for (int i=0;i<tuioObjectList.size();i++) {
+       TuioObject tobj = (TuioObject)tuioObjectList.elementAt(i);
+       int id = tobj.getSymbolID();     
      
-     float x_translate = tobj.getScreenX(width);// + (width-tobj.getScreenX(width))*0.1;
-     float y_translate = tobj.getScreenY(height);
-     pushMatrix();
-       translate(x_translate, y_translate);
-       rotate(tobj.getAngle());
-       smooth(4);
-       
-       
-       if(id >= 0 && id < 6) // people
-       {
-         if(activeTags.hasValue(id))
-           image(img_people[id], 0, 0);
-         else
-           image(img_people[id+6], 0, 0);
-       }
-       if(id >= 6 && id < 12) //action
-       {
-         if(activeTags.hasValue(id))
-           image(img_action[id%6], 0, 0);
-         else
-           image(img_action[id%6+6], 0, 0);
-       }
-       if(id >= 12 && id < 18) // emotion
-       {
-         if(activeTags.hasValue(id))
-           image(img_emotion[id%6], 0, 0);
-         else
-           image(img_emotion[id%6+6], 0, 0);
-       }  
-     popMatrix();
-     
+       float x_translate = tobj.getScreenX(offscreen.width);// + (width-tobj.getScreenX(width))*0.1;
+       float y_translate = tobj.getScreenY(offscreen.height);
+       offscreen.pushMatrix();
+       offscreen.translate(x_translate, y_translate);
+         offscreen.rotate(tobj.getAngle());
+         offscreen.smooth(4);
+              
+         if(id >= 0 && id < 6) { // people
+           if(activeTags.hasValue(id))
+             offscreen.image(img_people[id], 0, 0);
+           else
+             offscreen.image(img_people[id+6], 0, 0);
+         }
+         if(id >= 6 && id < 12) { //action
+           if(activeTags.hasValue(id))
+             offscreen.image(img_action[id%6], 0, 0);
+           else
+             offscreen.image(img_action[id%6+6], 0, 0);
+         }
+         if(id >= 12 && id < 18) { // emotion
+           if(activeTags.hasValue(id))
+             offscreen.image(img_emotion[id%6], 0, 0);
+           else
+             offscreen.image(img_emotion[id%6+6], 0, 0);
+         }
+       offscreen.popMatrix();
+    }
+    
 
      enrichments.selectImages(tuioObjectList, forceImageUpdate);
-     enrichments.displaySelection();
+     //enrichments.displaySelection();
      if(forceImageUpdate)
        forceImageUpdate = false;
    }
+   
+   offscreen.endDraw();  
+  // render the scene, transformed using the corner pin surface
+  surface.render(offscreen);
+}
 
+void keyPressed() {
+  switch(key) {
+  case 'c':
+    // enter/leave calibration mode, where surfaces can be warped 
+    // and moved
+    ks.toggleCalibration();
+    calibrationMode = !calibrationMode;
+    break;
+
+  case 'l':
+    // loads the saved layout
+    ks.load();
+    break;
+
+  case 's':
+    // saves the layout
+    ks.save();
+    break;
+  }
 }
 
 // OSC callback

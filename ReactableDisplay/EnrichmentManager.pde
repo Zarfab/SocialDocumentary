@@ -58,7 +58,12 @@ public class EnrichmentManager {
   public void selectImages(Vector tuioObjectList, boolean force) {  
     if((millis() - enrichmentTimeCount) > enrichmentTimeoutMillis || force) {
       enrichmentTimeCount = millis();
+      
+      for(int i=0; i<selection.size(); i++) {
+        selection.get(i).freeImage();
+      }
       selection.clear();
+      
       for (int i=0;i<tuioObjectList.size();i++) {
        TuioObject tobj = (TuioObject)tuioObjectList.elementAt(i);
        int id = tobj.getSymbolID();
@@ -104,7 +109,11 @@ public class EnrichmentManager {
        }
       }
       /*if(selection.size() < 2)
-        selection.add(places.get((int)(random(0, places.size()-1))));  */  
+        selection.add(places.get((int)(random(0, places.size()-1))));  */
+      for(int i=0; i<selection.size(); i++) {
+        selection.get(i).loadImageFromFile();
+      }
+      
       placesOnScreen.shuffle();
       enrichmentTimeoutMillis = selection.size()*3000;
      }

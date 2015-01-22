@@ -1,6 +1,7 @@
 public class EnrichmentImage {
     private PImage img;
     private String txt;
+    private String path;
     private ArrayList<String> tags;
     private int borderSize = 15;
     PFont typewriter;
@@ -10,7 +11,8 @@ public class EnrichmentImage {
       tags = new ArrayList<String>();
       tags.add(monotag);
       
-      img = loadImage(imagePath);
+      path = imagePath;
+      
       
       txt = "";
       String[] textMultiLines = loadStrings(textPath);
@@ -20,6 +22,14 @@ public class EnrichmentImage {
       
       typewriter = loadFont("CourierNewPS-BoldMT-48.vlw");
       rotation = PI*random(-0.10, 0.10);
+    }
+    
+    public void loadImageFromFile() {
+      img = loadImage(path);
+    }
+    
+    public void freeImage() {
+      img = null;
     }
     
     public void drawAsPolaroid(PGraphics screen, int cx, int cy, int w) {
@@ -44,7 +54,7 @@ public class EnrichmentImage {
       // draw a clear rectangle for "polaroid" effect
       screen.rect(-w/2 - borderSize, -w/2 - borderSize, w+2*borderSize, w+2*borderSize+linesNb*tSize);
       
-      // draw the image
+      //draw the image
       screen.imageMode(CENTER);
       screen.image(img, 0, 0, w, w);
             

@@ -16,10 +16,12 @@ OscP5 oscP5;
 
 // these are some helper variables which are used
 // to create scalable graphical feedback
-float cursor_size = 120;
+boolean fingerTracking = false;
+float cursor_size = 32;
 float object_size = 60;
 float table_size = 920; // TODO: 46.5cm x 66.5cm
 float scale_factor;
+float cur_size;
 PFont font;
 
 
@@ -66,6 +68,7 @@ void setup()
   // since we add "this" class as an argument the TuioProcessing class expects
   // an implementation of the TUIO callback methods (see below)
   tuioClient  = new TuioProcessing(this, 3334);
+  cur_size = cursor_size*scale_factor; 
   
   // communication with the main player
   oscP5 = new OscP5(this,11999);
@@ -181,6 +184,29 @@ void draw()
        offscreen.popMatrix();
     }
     
+    if(fingerTracking) {
+      Vector tuioCursorList = tuioClient.getTuioCursors();
+      for (int i=0;i<tuioCursorList.size();i++) {
+        TuioCursor tcur = (TuioCursor)tuioCursorList.elementAt(i);
+        Vector pointList = tcur.getPath();
+      
+        if (pointList.size()>0) {
+          stroke(127);
+          TuioPoint start_point = (TuioPoint)pointList.firstElement();;
+          for (int j=0;j<pointList.size();j++) {
+            TuioPoint end_point = (TuioPoint)pointList.elementAt(j);
+            line(start_point.getScreenX(offscreen.width),start_point.getScreenY(offscreen.height),
+              end_point.getScreenX(offscreen.width),end_point.getScreenY(offscreen.height));
+            start_point = end_point;
+          }
+        
+          stroke(192,192,192);
+          fill(192,192,192);
+          ellipse( tcur.getScreenX(offscreen.width), tcur.getScreenY(offscreen.height),cur_size,cur_size);
+        }
+      }
+    }
+    
 
      enrichments.selectImages(tuioObjectList, forceImageUpdate);
      enrichments.displaySelection(offscreen);
@@ -195,6 +221,10 @@ void draw()
 
 void keyPressed() {
   switch(key) {
+  case 'f':
+    // toogle finger tracking
+    fingerTracking = !fingerTracking;
+    break;
   case 'c':
     // enter/leave calibration mode, where surfaces can be warped 
     // and moved

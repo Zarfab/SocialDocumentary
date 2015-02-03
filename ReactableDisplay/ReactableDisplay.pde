@@ -25,10 +25,9 @@ float cur_size;
 PFont font;
 
 
-PImage[] img_people;
-PImage[] img_emotion;
-PImage[] img_action;
-IntList activeTags;
+KeywordImageManager kwi;
+int filterMode = 0;
+String filterModeNames[] = {"row", "mean filter", "median filter", "trace"};
 
 PImage img_logo, ltv_logo;
 
@@ -73,36 +72,8 @@ void setup()
   // communication with the main player
   oscP5 = new OscP5(this,11999);
 
-  // people = cyan
-  // emotion = yellow 
-  // action = pink
   
-  // Tangible filters represent 3 categories. 
-  // Corresponding image file naming:
-  // people_0.png
-  // emotion_0.png
-  // action_0.png
-  img_people = new PImage[12];
-  img_emotion = new PImage[12];
-  img_action = new PImage[12];
-  
-  
-  for (int i = 0; i < 6; i++ ){
-    img_people[i] = loadImage("people_"+i+"b.png");
-    img_people[i].resize((int)(img_people[i].width*scale_factor), (int)(img_people[i].height*scale_factor));
-    img_emotion[i] = loadImage("emotion_"+i+"b.png");
-    img_emotion[i].resize((int)(img_emotion[i].width*scale_factor), (int)(img_emotion[i].height*scale_factor));
-    img_action[i] = loadImage("action_"+i+"b.png");
-    img_action[i].resize((int)(img_action[i].width*scale_factor), (int)(img_action[i].height*scale_factor));
-    
-    img_people[i+6] = loadImage("people_"+i+"n.png");
-    img_people[i+6].resize((int)(img_people[i+6].width*scale_factor), (int)(img_people[i+6].height*scale_factor));
-    img_emotion[i+6] = loadImage("emotion_"+i+"n.png");
-    img_emotion[i+6].resize((int)(img_emotion[i+6].width*scale_factor), (int)(img_emotion[i+6].height*scale_factor));
-    img_action[i+6] = loadImage("action_"+i+"n.png");
-    img_action[i+6].resize((int)(img_action[i+6].width*scale_factor), (int)(img_action[i+6].height*scale_factor));
-  }
-  activeTags = new IntList();
+  kwi = new KeywordImageManager(scale_factor);
   
   img_logo = loadImage("SocialDocumentary.png");
   ltv_logo = loadImage("LinkedTV_WholeLogo.png");
@@ -151,38 +122,7 @@ void draw()
     offscreen.noStroke();
    
     Vector tuioObjectList = tuioClient.getTuioObjects();
-  
-    for (int i=0;i<tuioObjectList.size();i++) {
-       TuioObject tobj = (TuioObject)tuioObjectList.elementAt(i);
-       int id = tobj.getSymbolID();     
-     
-       float x_translate = tobj.getScreenX(offscreen.width);// + (width-tobj.getScreenX(width))*0.1;
-       float y_translate = tobj.getScreenY(offscreen.height);
-       offscreen.pushMatrix();
-       offscreen.translate(x_translate, y_translate);
-         offscreen.rotate(tobj.getAngle());
-         offscreen.smooth(4);
-              
-         if(id >= 0 && id < 6) { // people
-           if(activeTags.hasValue(id))
-             offscreen.image(img_people[id], 0, 0);
-           else
-             offscreen.image(img_people[id+6], 0, 0);
-         }
-         if(id >= 6 && id < 12) { //action
-           if(activeTags.hasValue(id))
-             offscreen.image(img_action[id%6], 0, 0);
-           else
-             offscreen.image(img_action[id%6+6], 0, 0);
-         }
-         if(id >= 12 && id < 18) { // emotion
-           if(activeTags.hasValue(id))
-             offscreen.image(img_emotion[id%6], 0, 0);
-           else
-             offscreen.image(img_emotion[id%6+6], 0, 0);
-         }
-       offscreen.popMatrix();
-    }
+    kwi.drawKeywords(offscreen, tuioObjectList, filterMode);
     
     if(fingerTracking) {
       Vector tuioCursorList = tuioClient.getTuioCursors();
@@ -221,6 +161,15 @@ void draw()
 
 void keyPressed() {
   switch(key) {
+  case '+':
+      filterMode = (filterMode+1) % 4;
+      println("new mode: "+filterModeNames[filterMode]);
+      break;
+    case '-':
+      filterMode = (filterMode-1) % 4;
+      println("new mode: "+filterModeNames[filterMode]);
+      break;   
+  
   case 'f':
     // toogle finger tracking
     fingerTracking = !fingerTracking;
@@ -253,10 +202,11 @@ void oscEvent(OscMessage mes) {
   
   if(mes.checkAddrPattern("/video/relevant_tags")==true) {
     videoRelevance = mes.get(0).intValue(); // nb tags
-    activeTags.clear();
+    IntList activeTags = new IntList();
     for(int i=0; i<videoRelevance; i++) {
       activeTags.append(mes.get(i+1).intValue());
     }
+    kwi.setActiveTags(activeTags);
     forceImageUpdate = true;
   }
 }

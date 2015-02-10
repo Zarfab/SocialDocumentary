@@ -117,7 +117,7 @@ void setup() {
   // send to Kinect attention tracker (reset timers)
   KISDapp = new NetAddress("127.0.0.1", 12001);
   // send to table display (relevance and enrichment update)
-  tableApp = new NetAddress("127.0.0.1", 11999);
+  tableApp = new NetAddress("169.254.156.102", 11999);
   
   // we create an instance of the TuioProcessing client
   // since we add "this" class as an argument the TuioProcessing class expects

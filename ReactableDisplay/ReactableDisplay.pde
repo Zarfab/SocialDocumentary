@@ -25,7 +25,7 @@ float cur_size;
 PFont font;
 
 
-KeywordImageManager kwi;
+KeywordVisualManager kvm;
 int filterMode = 0;
 String filterModeNames[] = {"row", "mean filter", "median filter", "trace"};
 
@@ -66,14 +66,14 @@ void setup()
   // we create an instance of the TuioProcessing client
   // since we add "this" class as an argument the TuioProcessing class expects
   // an implementation of the TUIO callback methods (see below)
-  tuioClient  = new TuioProcessing(this, 3334);
+  tuioClient  = new TuioProcessing(this, 3333);
   cur_size = cursor_size*scale_factor; 
   
   // communication with the main player
   oscP5 = new OscP5(this,11999);
 
   
-  kwi = new KeywordImageManager(scale_factor);
+  kvm = new KeywordVisualManager(this, "keywords.xml", scale_factor);
   
   img_logo = loadImage("SocialDocumentary.png");
   ltv_logo = loadImage("LinkedTV_WholeLogo.png");
@@ -122,7 +122,7 @@ void draw()
     offscreen.noStroke();
    
     Vector tuioObjectList = tuioClient.getTuioObjects();
-    kwi.drawKeywords(offscreen, tuioObjectList, filterMode);
+    kvm.drawKeywords(offscreen, tuioObjectList, filterMode);
     
     if(fingerTracking) {
       Vector tuioCursorList = tuioClient.getTuioCursors();
@@ -206,7 +206,7 @@ void oscEvent(OscMessage mes) {
     for(int i=0; i<videoRelevance; i++) {
       activeTags.append(mes.get(i+1).intValue());
     }
-    kwi.setActiveTags(activeTags);
+    kvm.setActiveTags(activeTags);
     forceImageUpdate = true;
   }
 }

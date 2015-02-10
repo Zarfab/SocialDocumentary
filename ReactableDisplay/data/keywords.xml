@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<class>
+   <people color="7cd1ea">
+   		<keyword tag="0">police</keyword>
+		<keyword tag="1">chapullers</keyword>
+		<keyword tag="2">politics</keyword>
+		<keyword tag="3">medical</keyword>
+		<keyword tag="4">artists</keyword>
+		<keyword tag="5">injured</keyword>
+	</people>
+	<action color="f05c78">
+		<keyword tag="6">speak</keyword>
+		<keyword tag="7">shout</keyword>
+		<keyword tag="8">strike</keyword>
+		<keyword tag="9">sing</keyword>
+		<keyword tag="10">run</keyword>
+		<keyword tag="11">chock</keyword>
+	</action>
+	<emotion color="fbee7c">
+		<keyword tag="12">fear</keyword>
+		<keyword tag="13">happiness</keyword>
+		<keyword tag="14">calmness</keyword>
+		<keyword tag="15">anger</keyword>
+		<keyword tag="16">pride</keyword>
+		<keyword tag="17">suffering</keyword>
+	</emotion>
+</class>

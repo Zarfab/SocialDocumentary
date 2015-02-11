@@ -3,6 +3,7 @@ import TUIO.*;
 public class KeywordVisualManager {
   
   ArrayList<KeywordVisual> keywordVisuals;
+  Vector tuioObjects;
   IntList identifiedTags;
   
   public KeywordVisualManager(PApplet parent, String keywordsFile, float scale_factor) {
@@ -38,6 +39,26 @@ public class KeywordVisualManager {
     return -1;
   }
   
+  public void updateTUIOList(Vector tuioObjectList) {
+    tuioObjects = tuioObjectList;
+    identifiedTags.clear();
+    for (int i=0;i<tuioObjects.size();i++) {      
+      TuioObject tobj = (TuioObject)tuioObjects.elementAt(i);
+      identifiedTags.append(tobj.getSymbolID());
+    }
+  }
+  
+  public StringList getIdentifiedKeywords() {
+    StringList identifiedKeywords = new StringList();
+    for (int i=0;i<identifiedTags.size();i++) {      
+      int index = getIndexOfKeywordVisualByTagId(identifiedTags.get(i));
+      if(index >= 0) {
+        identifiedKeywords.append(keywordVisuals.get(index).getKeyword()); 
+      }
+    }
+    return identifiedKeywords;
+  }
+  
   public void setActiveTags(IntList newActiveTags) {
     for(int i=0; i<keywordVisuals.size(); i++) {
       keywordVisuals.get(i).setActive(false);
@@ -46,15 +67,17 @@ public class KeywordVisualManager {
     }
   }
   
-  public void drawKeywords(PGraphics screen, Vector tuioObjectList, int mode) {
-    for (int i=0;i<tuioObjectList.size();i++) {      
-      TuioObject tobj = (TuioObject)tuioObjectList.elementAt(i);
-      int id = tobj.getSymbolID();
-      int index = getIndexOfKeywordVisualByTagId(id);
+  public void drawKeywords(PGraphics screen, boolean applyFilter) {
+    for (int i=0;i<tuioObjects.size();i++) {      
+      TuioObject tobj = (TuioObject)tuioObjects.elementAt(i);     
+      int index = getIndexOfKeywordVisualByTagId(tobj.getSymbolID());
       if(index >= 0) {
         keywordVisuals.get(index).checkLastDraw(); 
-        keywordVisuals.get(index).pushXYA(tobj.getScreenX(screen.width), tobj.getScreenY(screen.height), tobj.getAngle(), screen);       
-        keywordVisuals.get(index).drawFiltered(screen);
+        keywordVisuals.get(index).pushXYA(tobj.getScreenX(screen.width), tobj.getScreenY(screen.height), tobj.getAngle(), screen);
+        if(applyFilter)      
+          keywordVisuals.get(index).drawFiltered(screen);
+        else
+          keywordVisuals.get(index).drawRaw(screen);
       }
     }
   }

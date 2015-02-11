@@ -55,6 +55,10 @@ public class KeywordVisual {
     return tagId;
   }
   
+  public String getKeyword() {
+    return keyword;
+  }
+  
   public void clearFilters() {
     myFilter = new SignalFilter(myParent, 3);
     // Pass the parameters to the filter
@@ -83,7 +87,7 @@ public class KeywordVisual {
     //println(rawCoord.z, filteredCoord.z);
   }
   
-  public void drawRow(PGraphics screen) {
+  public void drawRaw(PGraphics screen) {
     float x = rawCoord.x;
     float y = rawCoord.y;
     float a = rawCoord.z;

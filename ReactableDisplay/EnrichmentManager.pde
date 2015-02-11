@@ -55,7 +55,7 @@ public class EnrichmentManager {
     }
   }
   
-  public void selectImages(Vector tuioObjectList, boolean force) {  
+  public void selectImages(StringList identifiedKeywords, boolean force) {  
     if((millis() - enrichmentTimeCount) > enrichmentTimeoutMillis || force) {
       enrichmentTimeCount = millis();
       
@@ -64,48 +64,34 @@ public class EnrichmentManager {
       }
       selection.clear();
       
-      for (int i=0;i<tuioObjectList.size();i++) {
-       TuioObject tobj = (TuioObject)tuioObjectList.elementAt(i);
-       int id = tobj.getSymbolID();
-       switch(id)
-       {
-         case 0: // police
+      for (int i=0;i<identifiedKeywords.size();i++) {
+       String keyword = identifiedKeywords.get(i);
+       if(keyword.equals("police")) {
            selection.add(police.get((int)(random(0, police.size()-1))));
            selection.add(police.get((int)(random(0, police.size()-1))));
-           break;
-         case 1: // protestors
+       } else if(keyword.equals("chapullers")) {
            selection.add(protestors.get((int)(random(0, protestors.size()-1))));
            selection.add(protestors.get((int)(random(0, protestors.size()-1))));
-           break;
-         case 2: // politics
+       } else if(keyword.equals("politics")) {
            selection.add(politics.get((int)(random(0, politics.size()-1))));
            selection.add(politics.get((int)(random(0, politics.size()-1))));
-           break;
-         case 4: // artists
+       } else if(keyword.equals("artists")) {
            selection.add(artists.get((int)(random(0, artists.size()-1))));
            selection.add(artists.get((int)(random(0, artists.size()-1))));
-           break;
-         case 8: // strike
+       } else if(keyword.equals("strike")) {
            selection.add(police.get((int)(random(0, police.size()-1))));
-           break;
-         case 10: // run
+       } else if(keyword.equals("run")) {
            selection.add(protestors.get((int)(random(0, protestors.size()-1))));
-           break;
-         case 11: // choke
+       } else if(keyword.equals("choke")) {
            selection.add(protestors.get((int)(random(0, protestors.size()-1))));
-           break;
-         case 12: // fear
+       } else if(keyword.equals("fear")) {
            selection.add(police.get((int)(random(0, police.size()-1))));
-           break;
-         case 14: // calmness
+       } else if(keyword.equals("calmness")) {
            selection.add(politics.get((int)(random(0, politics.size()-1))));
-           break;
-         case 16: // pride
+       } else if(keyword.equals("pride")) {
            selection.add(protestors.get((int)(random(0, protestors.size()-1))));
-           break;
-         default:
+       } else {
            selection.add(places.get((int)(random(0, places.size()-1))));
-           break;
        }
       }
       /*if(selection.size() < 2)
@@ -115,7 +101,7 @@ public class EnrichmentManager {
       }
       
       placesOnScreen.shuffle();
-      enrichmentTimeoutMillis = selection.size()*3000;
+      enrichmentTimeoutMillis = selection.size()*2500;
      }
   }
   

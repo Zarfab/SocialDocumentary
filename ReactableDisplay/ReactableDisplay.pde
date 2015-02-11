@@ -26,8 +26,7 @@ PFont font;
 
 
 KeywordVisualManager kvm;
-int filterMode = 0;
-String filterModeNames[] = {"row", "mean filter", "median filter", "trace"};
+boolean applyCoordFilter = true;
 
 PImage img_logo, ltv_logo;
 
@@ -122,7 +121,8 @@ void draw()
     offscreen.noStroke();
    
     Vector tuioObjectList = tuioClient.getTuioObjects();
-    kvm.drawKeywords(offscreen, tuioObjectList, filterMode);
+    kvm.updateTUIOList(tuioObjectList);
+    kvm.drawKeywords(offscreen, applyCoordFilter);
     
     if(fingerTracking) {
       Vector tuioCursorList = tuioClient.getTuioCursors();
@@ -147,11 +147,11 @@ void draw()
       }
     }
     
-
-     enrichments.selectImages(tuioObjectList, forceImageUpdate);
-     enrichments.displaySelection(offscreen);
-     if(forceImageUpdate)
-       forceImageUpdate = false;
+    StringList keywords = kvm.getIdentifiedKeywords();
+    enrichments.selectImages(keywords, forceImageUpdate);
+    enrichments.displaySelection(offscreen);
+    if(forceImageUpdate)
+      forceImageUpdate = false;
    }
    
    offscreen.endDraw();  
@@ -161,15 +161,6 @@ void draw()
 
 void keyPressed() {
   switch(key) {
-  case '+':
-      filterMode = (filterMode+1) % 4;
-      println("new mode: "+filterModeNames[filterMode]);
-      break;
-    case '-':
-      filterMode = (filterMode-1) % 4;
-      println("new mode: "+filterModeNames[filterMode]);
-      break;   
-  
   case 'f':
     // toogle finger tracking
     fingerTracking = !fingerTracking;

@@ -3,6 +3,7 @@ import java.util.Vector;      //
 import oscP5.*;               //OSC library
 import netP5.*;               //OSC
 import deadpixel.keystone.*;  //projection mapping library
+import controlP5.*;           //button interface
 
 // calibration and projection mapping
 Keystone ks;
@@ -30,6 +31,8 @@ KeywordVisualManager kvm;
 boolean applyCoordFilter = true;
 
 PImage img_logo, ltv_logo;
+ToogleButton nextButton, prevButton;
+float buttonSize = 120;
 
 EnrichmentManager enrichments;
 int videoRelevance = 0;
@@ -57,11 +60,18 @@ void setup()
   pattern = loadImage("pattern.png");
   pattern.resize(offscreen.width, offscreen.height);
   
-  //loop();
-  //frameRate(30);
-  
   font = createFont("Arial", 18);
   scale_factor = offscreen.height/table_size;
+  
+  buttonSize = offscreen.height/10.0;
+  PImage nextU = loadImage("next_up.png");
+  PImage nextD = loadImage("next_down.png");
+  nextButton = new ToogleButton("", offscreen.width/2 + buttonSize, offscreen.height-buttonSize, nextU, nextD);
+  nextButton.setSize(buttonSize, buttonSize);
+  PImage prevU = loadImage("prev_up.png");
+  PImage prevD = loadImage("prev_down.png");
+  prevButton = new ToogleButton("", offscreen.width/2 - buttonSize, offscreen.height-buttonSize, prevU, prevD);
+  prevButton.setSize(buttonSize, buttonSize);
   
   XML configElement = loadXML("config.xml");
   
@@ -139,16 +149,19 @@ void draw()
           TuioPoint start_point = (TuioPoint)pointList.firstElement();;
           for (int j=0;j<pointList.size();j++) {
             TuioPoint end_point = (TuioPoint)pointList.elementAt(j);
-            line(start_point.getScreenX(offscreen.width),start_point.getScreenY(offscreen.height),
-              end_point.getScreenX(offscreen.width),end_point.getScreenY(offscreen.height));
+            line(offscreen.width - start_point.getScreenX(offscreen.width),
+              offscreen.height - start_point.getScreenY(offscreen.height),
+              offscreen.width - end_point.getScreenX(offscreen.width),
+              offscreen.height - end_point.getScreenY(offscreen.height));
             start_point = end_point;
           }
-        
           stroke(192,192,192);
           fill(192,192,192);
           ellipse( tcur.getScreenX(offscreen.width), tcur.getScreenY(offscreen.height),cur_size,cur_size);
         }
       }
+      nextButton.drawOnScreen(offscreen);
+      prevButton.drawOnScreen(offscreen);
     }
     
     StringList keywords = kvm.getIdentifiedKeywords();
@@ -157,6 +170,8 @@ void draw()
     if(forceImageUpdate)
       forceImageUpdate = false;
    }
+   
+   
    
    offscreen.endDraw();  
   // render the scene, transformed using the corner pin surface

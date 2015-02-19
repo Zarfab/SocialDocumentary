@@ -9,7 +9,8 @@ public class KeywordVisual {
   int tagId;
   boolean isActive = false;
   PFont YaHei_UI_Bold;
-  float fontSize = 22.0f;
+  float fontSize = 24.0f;
+  float strokeW = 2.2f;
   
   PVector rawCoord;
   PVector filteredCoord;
@@ -34,6 +35,7 @@ public class KeywordVisual {
     
     imageSize *= scale_factor;
     fontSize *= scale_factor;
+    strokeW *= scale_factor;
     
     YaHei_UI_Bold = loadFont("MicrosoftYaHeiUI-Bold-48.vlw");
     keyword = theKeyword;
@@ -121,14 +123,14 @@ public class KeywordVisual {
     float angleEnd = 0.5 - 0.02 * keyword.length();
 
     screen.stroke(strokeColor);
-    screen.strokeWeight(2.5);
+    screen.strokeWeight(strokeW);
     screen.noFill();
     if(isActive) {
        screen.stroke(activeColor);
        screen.strokeWeight(bigRadius*0.06);
        screen.strokeCap(SQUARE);
        screen.arc(0, 0, bigRadius*0.94, bigRadius*0.94, PI*(angleBeg), PI*(2+angleEnd), OPEN);
-       screen.strokeWeight(2.5);
+       screen.strokeWeight(strokeW);
        screen.stroke(strokeColor);
      }
      screen.arc(0, 0, bigRadius, bigRadius, PI*angleBeg, PI*(2+angleEnd), OPEN);

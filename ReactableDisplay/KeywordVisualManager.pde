@@ -16,7 +16,7 @@ public class KeywordVisualManager {
     for(int c = 0; c < classesString.length; c++) {
       XML currentClass = xml.getChild(classesString[c]);
       //get color for the class
-      color classColor = unhex(currentClass.getString("color"));
+      color classColor = unhex(currentClass.getString("color")) - (int)(pow(2, 24));
       
       XML[] classKeywords = currentClass.getChildren("keyword");
       for(int ck = 0; ck < classKeywords.length; ck++) {

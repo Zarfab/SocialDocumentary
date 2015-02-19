@@ -12,7 +12,8 @@ PImage pattern;
 boolean calibrationMode = false;
 
 TuioProcessing tuioClient;
-OscP5 oscP5;
+OscP5 oscListener;
+NetAddress playerAddress;
 
 // these are some helper variables which are used
 // to create scalable graphical feedback
@@ -62,15 +63,18 @@ void setup()
   font = createFont("Arial", 18);
   scale_factor = offscreen.height/table_size;
   
-  // we create an instance of the TuioProcessing client
-  // since we add "this" class as an argument the TuioProcessing class expects
-  // an implementation of the TUIO callback methods (see below)
-  tuioClient  = new TuioProcessing(this, 3333);
+  XML configElement = loadXML("config.xml");
+  
+  XML tuioElement = configElement.getChild("tuiolistener");
+  tuioClient  = new TuioProcessing(this, tuioElement.getInt("port"));
   cur_size = cursor_size*scale_factor; 
   
-  // communication with the main player
-  oscP5 = new OscP5(this,11999);
-
+  // dual communication with the main player
+  XML oscListenerElement = configElement.getChild("osclistener");
+  oscListener = new OscP5(this, oscListenerElement.getInt("port"));
+  XML oscSenderElement = configElement.getChild("oscsender");
+  playerAddress = new NetAddress(oscSenderElement.getString("address"), oscSenderElement.getInt("port"));
+  println("sending OSC to : "+playerAddress);
   
   kvm = new KeywordVisualManager(this, "keywords.xml", scale_factor);
   

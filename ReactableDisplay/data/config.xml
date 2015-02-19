@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<config>
+   <tuiolistener port="3333" />
+   <osclistener port="11999" />
+   <oscsender address="169.254.166.251" port="11998" />
+</config>

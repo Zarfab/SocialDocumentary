@@ -122,7 +122,7 @@ void setup() {
   // we create an instance of the TuioProcessing client
   // since we add "this" class as an argument the TuioProcessing class expects
   // an implementation of the TUIO callback methods (see below)
-  tuioClient  = new TuioProcessing(this, 3335);
+  tuioClient  = new TuioProcessing(this, 3334);
   tuioManager = new TuioObjectsManager();
   
   // ini users
@@ -283,6 +283,7 @@ void sendRelevanceMessage() {
   for(int i=0; i<relevantTags.size(); i++) {
     relevanceMessage.add(relevantTags.get(i));
   }
+  println("send to table: "+relevanceMessage);
   oscP5.send(relevanceMessage, tableApp);
 }
 

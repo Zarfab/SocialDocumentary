@@ -13,6 +13,8 @@ class SegmentManager {
  private ArrayList<Segment> allSegments;
  private ArrayList<ArrayList<Segment> > relevantSegments;
  private Segment currentSeg;
+ private ArrayList<Segment> playedSegments;
+ private int playedIndex = -1;
  private String srtFilePath;
  private ArrayList<String> lastTags;
  private  ArrayList<Integer> lastIds;
@@ -20,6 +22,7 @@ class SegmentManager {
   
  private void init() {
    allSegments = new ArrayList<Segment>();
+   playedSegments = new ArrayList<Segment>();
    
    relevantSegments = new ArrayList<ArrayList<Segment>>();
    for(int i = 0; i<4; i++)
@@ -100,46 +103,64 @@ class SegmentManager {
    for(int i=0; i<p_ids.length; i++) {
      lastIds.add(p_ids[i]);
    }
+   
+   playedSegments.clear();
+   playedIndex = -1;
  }
  
  // to be called when the player is at the end of a segment or when a new tag is chosen
  public void goToNextSegment() {  
-   // get the first part in relevanceSegments where there are some segments
-   int rel=3;
-   while(relevantSegments.get(rel).size() <= 0 && rel > 0) {
-     rel--;
-     //System.out.println(relevantSegments.get(rel).size());
-   }   
+   if(playedSegments.size()-1 == playedIndex) {
+     // get the first part in relevanceSegments where there are some segments
+     int rel=3;
+     while(relevantSegments.get(rel).size() <= 0 && rel > 0) {
+       rel--;
+       //System.out.println(relevantSegments.get(rel).size());
+     }   
    
-   // if relevant segment list is empty, fill it with the same keywords
-   if(rel == 0 && relevantSegments.get(0).size() == 0) {
-     ArrayList<String> tempTags = lastTags;
-     int[] tempIds = new int[lastIds.size()];
-     for(int i=0; i<tempIds.length; i++) {
-       tempIds[i] = lastIds.get(i);
+     // if relevant segment list is empty, fill it with the same keywords
+     if(rel == 0 && relevantSegments.get(0).size() == 0) {
+       ArrayList<String> tempTags = lastTags;
+       int[] tempIds = new int[lastIds.size()];
+       for(int i=0; i<tempIds.length; i++) {
+         tempIds[i] = lastIds.get(i);
+       }
+       lastTags = new ArrayList<String>();
+       calculateNewSegmentsList(tempTags, tempIds);
      }
-     lastTags = new ArrayList<String>();
-     calculateNewSegmentsList(tempTags, tempIds);
-   }
    
-   // select a segment by roulette technic
+     // select a segment by roulette technic
      // calculate sum of rates in this part
-   int sumOfRates = 0;
-   for(int i=0; i<relevantSegments.get(rel).size(); i++)
-     sumOfRates += relevantSegments.get(rel).get(i).getRate();
-     // get a random value between 1 and sumOfRate
-   int random = (int)(Math.floor(Math.random() * (sumOfRates))) + 1;
-     // get the segment
-   int k = random;   
-   int i = -1;
-   while(i<relevantSegments.get(rel).size() && k > 0) {
-     i++;
-     //System.out.println("k = "+ k + " i = " +i);
-     k -= relevantSegments.get(rel).get(i).getRate();
+     int sumOfRates = 0;
+     for(int i=0; i<relevantSegments.get(rel).size(); i++)
+       sumOfRates += relevantSegments.get(rel).get(i).getRate();
+       // get a random value between 1 and sumOfRate
+     int random = (int)(Math.floor(Math.random() * (sumOfRates))) + 1;
+       // get the segment
+     int k = random;   
+     int i = -1;
+     while(i<relevantSegments.get(rel).size() && k > 0) {
+       i++;
+       //System.out.println("k = "+ k + " i = " +i);
+       k -= relevantSegments.get(rel).get(i).getRate();
     
-   }
+     }
    
-   currentSeg = relevantSegments.get(rel).remove(i);
+     currentSeg = relevantSegments.get(rel).remove(i);
+     playedSegments.add(currentSeg);
+     playedIndex++;
+   }
+   else {
+     playedIndex++;
+     currentSeg = playedSegments.get(playedIndex);
+   }
+ }
+ 
+ public void goToPreviousSegment() {
+   if(playedIndex > 1) {
+     playedIndex--;
+     currentSeg = playedSegments.get(playedIndex);
+   }
  }
  
  // to be called in case of user's attention is going over 2

@@ -111,18 +111,33 @@ void setup() {
   tweetFilePath = prefixFilePath + "_tweets.txt";
   tweetManager = new TweetManager(tweetFilePath);
   
-  /* start oscP5, listening for incoming messages at port 12000 */
-  // receive from Kinect attention tracker
-  oscP5 = new OscP5(this,12000);
-  // send to Kinect attention tracker (reset timers)
-  KISDapp = new NetAddress("127.0.0.1", 12001);
-  // send to table display (relevance and enrichment update)
-  tableApp = new NetAddress("169.254.156.102", 11999);
   
-  // we create an instance of the TuioProcessing client
-  // since we add "this" class as an argument the TuioProcessing class expects
-  // an implementation of the TUIO callback methods (see below)
-  tuioClient  = new TuioProcessing(this, 3334);
+  // communication opening
+  XML configElement = loadXML("config.xml");
+  
+  // receive from Kinect attention tracker and reactable
+  XML oscListenerElement = configElement.getChild("osclistener");
+  oscP5 = new OscP5(this, oscListenerElement.getInt("port"));
+  
+  XML[] oscSenderElements = configElement.getChildren("oscsender");
+  for(int i=0; i<oscSenderElements.length; i++) {
+    XML oscSenderElement = oscSenderElements[i];
+    String dest = oscSenderElement.getString("dest");
+    if(dest.equals("KISD")) {
+      // send to Kinect attention tracker (reset timers)
+      KISDapp = new NetAddress(oscSenderElement.getString("address"), oscSenderElement.getInt("port"));
+      println("sendind messages to Kinect application at "+KISDapp);
+    }
+    else if(dest.equals("table")) {    
+      // send to table display (relevance and enrichment update)
+      tableApp = new NetAddress(oscSenderElement.getString("address"), oscSenderElement.getInt("port"));
+      println("sendind messages to reactable application at "+tableApp);
+    }
+  }
+  
+  XML tuioElement = configElement.getChild("tuiolistener");
+  tuioClient  = new TuioProcessing(this, tuioElement.getInt("port"));
+  println("listening TUIO messages from port "+tuioElement.getInt("port"));
   tuioManager = new TuioObjectsManager();
   
   // ini users
@@ -159,8 +174,10 @@ void draw() {
     tweetManager.printTweet();
   }
   
-  if(video.time() > segManager.getCurrentSegment().getEndTime())
+  if(video.time() > segManager.getCurrentSegment().getEndTime()) {
+    segManager.goToNextSegment();
     updateSegment();
+  }
   
   //printSelectedKeywords();
   //printSegmentAnnotations();
@@ -259,7 +276,6 @@ void updateKeywordList() {
 }
 
 void updateSegment() {
-  segManager.goToNextSegment();
   video.jump(segManager.getCurrentSegment().getStartTime());
   
   String s = "Jump to segment ";
@@ -417,6 +433,26 @@ void oscEvent(OscMessage mes) {
       users[userID-1].screenWatched = (int)mes.get(1).floatValue();
       users[userID-1].pushCoordXY(/* x */mes.get(2).floatValue(), /* y */mes.get(3).floatValue() * -1);
       return;
+  }
+  
+  // update reactable next / prev events
+  if(mes.checkAddrPattern("/reactable/next")==true) {
+    //go to next video
+    segManager.goToNextSegment();
+    updateSegment();
+    //send feedback message
+    OscMessage videoNextMessage = new OscMessage("/video/next");
+    oscP5.send(videoNextMessage, tableApp);
+    return;
+  }
+  if(mes.checkAddrPattern("/reactable/prev")==true) {
+    //go to previous video
+    segManager.goToPreviousSegment();
+    updateSegment();
+    //send feedback message
+    OscMessage videoPrevMessage = new OscMessage("/video/prev");
+    oscP5.send(videoPrevMessage, tableApp);
+    return;
   }
 }
 

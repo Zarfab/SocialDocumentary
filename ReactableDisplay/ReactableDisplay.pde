@@ -13,7 +13,7 @@ PImage pattern;
 boolean calibrationMode = false;
 
 TuioProcessing tuioClient;
-OscP5 oscListener;
+OscP5 oscP5;
 NetAddress playerAddress;
 
 // these are some helper variables which are used
@@ -77,11 +77,12 @@ void setup()
   
   XML tuioElement = configElement.getChild("tuiolistener");
   tuioClient  = new TuioProcessing(this, tuioElement.getInt("port"));
+  println("listening TUIO messages from port "+tuioElement.getInt("port"));
   cur_size = cursor_size*scale_factor; 
   
   // dual communication with the main player
   XML oscListenerElement = configElement.getChild("osclistener");
-  oscListener = new OscP5(this, oscListenerElement.getInt("port"));
+  oscP5 = new OscP5(this, oscListenerElement.getInt("port"));
   XML oscSenderElement = configElement.getChild("oscsender");
   playerAddress = new NetAddress(oscSenderElement.getString("address"), oscSenderElement.getInt("port"));
   println("sending OSC to : "+playerAddress);
@@ -142,24 +143,39 @@ void draw()
       Vector tuioCursorList = tuioClient.getTuioCursors();
       for (int i=0;i<tuioCursorList.size();i++) {
         TuioCursor tcur = (TuioCursor)tuioCursorList.elementAt(i);
+        boolean nextPressed = nextButton.isPressed(tcur.getScreenX(offscreen.width), tcur.getScreenY(offscreen.height));
+        boolean prevPressed = prevButton.isPressed(tcur.getScreenX(offscreen.width), tcur.getScreenY(offscreen.height));
+        if(nextPressed) {
+          nextButton.setState(true);
+          //send next message over OSC
+          OscMessage nextMessage = new OscMessage("/reactable/next");
+          oscP5.send(nextMessage, playerAddress);
+        }
+        else if(prevPressed) {
+          prevButton.setState(true);
+          //send prev message over OSC
+          OscMessage prevMessage = new OscMessage("/reactable/prev");
+          oscP5.send(prevMessage, playerAddress);
+        }
+        
         Vector pointList = tcur.getPath();
-      
         if (pointList.size()>0) {
-          stroke(127);
+          offscreen.stroke(127);
           TuioPoint start_point = (TuioPoint)pointList.firstElement();;
           for (int j=0;j<pointList.size();j++) {
             TuioPoint end_point = (TuioPoint)pointList.elementAt(j);
-            line(offscreen.width - start_point.getScreenX(offscreen.width),
-              offscreen.height - start_point.getScreenY(offscreen.height),
-              offscreen.width - end_point.getScreenX(offscreen.width),
-              offscreen.height - end_point.getScreenY(offscreen.height));
+            offscreen.line(start_point.getScreenX(offscreen.width),
+              start_point.getScreenY(offscreen.height),
+              end_point.getScreenX(offscreen.width),
+              end_point.getScreenY(offscreen.height));
             start_point = end_point;
           }
-          stroke(192,192,192);
-          fill(192,192,192);
-          ellipse( tcur.getScreenX(offscreen.width), tcur.getScreenY(offscreen.height),cur_size,cur_size);
+          offscreen.stroke(192,192,192);
+          offscreen.fill(192,192,192);
+          offscreen.ellipse( tcur.getScreenX(offscreen.width), tcur.getScreenY(offscreen.height),cur_size,cur_size);
         }
       }
+      
       nextButton.drawOnScreen(offscreen);
       prevButton.drawOnScreen(offscreen);
     }
@@ -218,10 +234,20 @@ void oscEvent(OscMessage mes) {
     }
     kvm.setActiveTags(activeTags);
     forceImageUpdate = true;
+    return;
+  }
+  
+  // next video playing
+  if(mes.checkAddrPattern("/video/next")==true) {
+    nextButton.setState(false);
+    return;
+  }
+  // previous video playing
+  if(mes.checkAddrPattern("/video/prev")==true) {
+    prevButton.setState(false);
+    return;
   }
 }
-
-
 
 
 // these callback methods are called whenever a TUIO event occurs

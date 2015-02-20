@@ -5,6 +5,9 @@ class ToogleButton {
   boolean isDown;
   PVector position;
   PVector size;
+  int lastEventMillis;
+  int timeBetweenEvents = 1000;
+  boolean wasPressed = false;
   
   public ToogleButton(String p_text, float xPos, float yPos, PImage up, PImage down) {
     isDown = false;
@@ -47,6 +50,23 @@ class ToogleButton {
   
   public void setState(boolean newState) {
     isDown = newState;
+  }
+  
+  public boolean isPressed(float cursorX, float cursorY) {
+    boolean pressed = false;
+    if (cursorX < position.x+size.x/2 &&
+          cursorX > position.x-size.x/2 &&
+          cursorY < position.y+size.y/2 &&
+          cursorY > position.y-size.y/2 &&
+          millis()- lastEventMillis > timeBetweenEvents &&
+          !wasPressed ) {
+      pressed = true;
+      wasPressed = true;
+      lastEventMillis = millis();
+    }
+    else
+      wasPressed = false;
+    return pressed;
   }
   
   public void drawOnScreen(PGraphics screen) {

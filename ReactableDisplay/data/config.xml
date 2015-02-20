@@ -2,5 +2,5 @@
 <config>
    <tuiolistener port="3333" />
    <osclistener port="11999" />
-   <oscsender address="169.254.166.251" port="11998" />
+   <oscsender address="169.254.166.251" port="12000" />
 </config>

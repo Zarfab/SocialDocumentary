@@ -52,6 +52,7 @@ public class EnrichmentManager {
             break;
         }
       }
+      println(list.nb_items+" enrichments found in directory \"" + directories[i] + "\"");
     }
   }
   
@@ -62,8 +63,9 @@ public class EnrichmentManager {
       for(int i=0; i<selection.size(); i++) {
         selection.get(i).freeImage();
       }
+
       selection.clear();
-      
+
       for (int i=0;i<identifiedKeywords.size();i++) {
        String keyword = identifiedKeywords.get(i);
        if(keyword.equals("police")) {
@@ -99,7 +101,6 @@ public class EnrichmentManager {
       for(int i=0; i<selection.size(); i++) {
         selection.get(i).loadImageFromFile();
       }
-      
       placesOnScreen.shuffle();
       enrichmentTimeoutMillis = selection.size()*2500;
      }

@@ -28,6 +28,7 @@ PFont font;
 
 
 KeywordVisualManager kvm;
+StringList identifiedKeywords;
 boolean applyCoordFilter = true;
 
 PImage img_logo, ltv_logo;
@@ -88,6 +89,7 @@ void setup()
   println("sending OSC to : "+playerAddress);
   
   kvm = new KeywordVisualManager(this, "keywords.xml", scale_factor);
+  identifiedKeywords = new StringList();
   
   img_logo = loadImage("SocialDocumentary.png");
   ltv_logo = loadImage("LinkedTV_WholeLogo.png");
@@ -97,6 +99,9 @@ void setup()
   enrichments = new EnrichmentManager(dataPath("MediaEnrichment"));
   
   ks.load();
+  if(calibrationMode) {
+    ks.toggleCalibration();
+  }
    
 }
 
@@ -118,6 +123,7 @@ void draw()
   if(calibrationMode) {
     offscreen.fill(0, 255, 0);
     offscreen.ellipse(surfaceMouse.x, surfaceMouse.y, 75, 75);
+    offscreen.imageMode(CENTER);
     offscreen.image(pattern, offscreen.width/2, offscreen.height/2);
   }
   else {  
@@ -181,7 +187,22 @@ void draw()
     }
     
     StringList keywords = kvm.getIdentifiedKeywords();
-    enrichments.selectImages(keywords, forceImageUpdate);
+    boolean keywordsNotChanged = true;
+    for(int i=0; i<keywords.size(); i++) {
+      keywordsNotChanged &= identifiedKeywords.hasValue(keywords.get(i));
+    }
+    
+    if(!keywordsNotChanged && keywords.size() > 0) {
+      // send new keywords list to the player
+      OscMessage keywordListMessage = new OscMessage("/reactable/keywords");
+      keywordListMessage.add(keywords.size());
+      for(int i=0; i<keywords.size(); i++) {
+        keywordListMessage.add(keywords.get(i));
+      }
+      oscP5.send(keywordListMessage, playerAddress);
+      identifiedKeywords = keywords;
+    }
+    enrichments.selectImages(identifiedKeywords, forceImageUpdate);
     enrichments.displaySelection(offscreen);
     if(forceImageUpdate)
       forceImageUpdate = false;
@@ -226,24 +247,16 @@ void oscEvent(OscMessage mes) {
   //print(" addrpattern: "+ mes.addrPattern());
   //print(" argType: "+ mes.typetag() + "\n");
   
-  if(mes.checkAddrPattern("/video/relevant_tags")==true) {
-    videoRelevance = mes.get(0).intValue(); // nb tags
-    IntList activeTags = new IntList();
+  if(mes.checkAddrPattern("/video/relevant_keywords")==true) {
+    videoRelevance = mes.get(0).intValue(); // nb keywords
+    StringList activeKeywords = new StringList();
     for(int i=0; i<videoRelevance; i++) {
-      activeTags.append(mes.get(i+1).intValue());
+      activeKeywords.append(mes.get(i+1).stringValue());
     }
-    kvm.setActiveTags(activeTags);
+    kvm.setActiveKeywords(activeKeywords);
     forceImageUpdate = true;
-    return;
-  }
-  
-  // next video playing
-  if(mes.checkAddrPattern("/video/next")==true) {
+    
     nextButton.setState(false);
-    return;
-  }
-  // previous video playing
-  if(mes.checkAddrPattern("/video/prev")==true) {
     prevButton.setState(false);
     return;
   }

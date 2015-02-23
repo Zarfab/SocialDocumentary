@@ -16,8 +16,7 @@ class SegmentManager {
  private ArrayList<Segment> playedSegments;
  private int playedIndex = -1;
  private String srtFilePath;
- private ArrayList<String> lastTags;
- private  ArrayList<Integer> lastIds;
+ private StringList lastKeywords;
 
   
  private void init() {
@@ -30,8 +29,7 @@ class SegmentManager {
    
    currentSeg = new Segment();
    
-   lastTags = new ArrayList<String>();
-   lastIds = new  ArrayList<Integer>();
+   lastKeywords = new StringList();
  }
   
  public SegmentManager() {
@@ -75,19 +73,7 @@ class SegmentManager {
  }
 
 // to be called when a new list of tags is chosen by the user
- public void calculateNewSegmentsList(ArrayList<String> p_tags, int[] p_ids) {
-   
-   // check if the tags are the same than previously and ignore the rest if true
-   //if(lastTags.size() == p_tags.size()) {
-   //  boolean sameTags = true;
-   //  for(int i = 0; i<lastTags.size(); i++)
-   //    sameTags &= lastTags.get(i).equals(p_tags.get(i));
-   //  if(sameTags) {
-   //    System.out.println("the list of word is the same\n");
-   //    return;
-   //  }  
-   //}
-   
+ public void calculateNewSegmentsList(StringList p_newKeywords) {   
    // clear the relevant segments array
    for(int i = 0; i<relevantSegments.size(); i++)
      relevantSegments.get(i).clear();
@@ -95,14 +81,11 @@ class SegmentManager {
    // fill it with all the segment ordered by relevance
    for(int i=0; i<allSegments.size(); i++) {
      Segment seg = allSegments.get(i);
-     seg.calculateRelevance(p_tags, p_ids);
+     seg.calculateRelevance(p_newKeywords);
      relevantSegments.get(seg.getRelevance()).add(seg);
    }
    
-   lastTags = p_tags;
-   for(int i=0; i<p_ids.length; i++) {
-     lastIds.add(p_ids[i]);
-   }
+   lastKeywords = p_newKeywords;
    
    playedSegments.clear();
    playedIndex = -1;
@@ -120,13 +103,7 @@ class SegmentManager {
    
      // if relevant segment list is empty, fill it with the same keywords
      if(rel == 0 && relevantSegments.get(0).size() == 0) {
-       ArrayList<String> tempTags = lastTags;
-       int[] tempIds = new int[lastIds.size()];
-       for(int i=0; i<tempIds.length; i++) {
-         tempIds[i] = lastIds.get(i);
-       }
-       lastTags = new ArrayList<String>();
-       calculateNewSegmentsList(tempTags, tempIds);
+       calculateNewSegmentsList(lastKeywords);
      }
    
      // select a segment by roulette technic
@@ -147,6 +124,7 @@ class SegmentManager {
      }
    
      currentSeg = relevantSegments.get(rel).remove(i);
+     
      playedSegments.add(currentSeg);
      playedIndex++;
    }
@@ -156,11 +134,13 @@ class SegmentManager {
    }
  }
  
- public void goToPreviousSegment() {
-   if(playedIndex > 1) {
+ public boolean goToPreviousSegment() {
+   if(playedIndex >= 1) {
      playedIndex--;
      currentSeg = playedSegments.get(playedIndex);
+     return true;
    }
+   return false;
  }
  
  // to be called in case of user's attention is going over 2
@@ -182,7 +162,7 @@ class SegmentManager {
      int tempIndex = 0;
      double tempStartTime = 0.0;
      double tempEndTime = 0.0;
-     ArrayList<String> tempTags = new ArrayList<String>();
+     StringList tempKeywords = new StringList();
      int tempRate = 1;
      String[] segStrings = new String[3];
      
@@ -211,8 +191,8 @@ class SegmentManager {
           break;
         case 2: // keywords
           segStrings[2] = str;
-          tempTags.clear();
-          tempTags.addAll(extractTagsFromString(str));
+          tempKeywords.clear();
+          tempKeywords.append(extractTagsFromString(str));
           break;
         case 3:
           mIndex = pIndex.matcher(str);
@@ -221,7 +201,7 @@ class SegmentManager {
           }
           break;
         case 4: // push new segment
-          allSegments.add(new Segment(tempIndex, tempRate, tempStartTime, tempEndTime, tempTags, segStrings));
+          allSegments.add(new Segment(tempIndex, tempRate, tempStartTime, tempEndTime, tempKeywords, segStrings));
           break;
         default: // new line
           break;
@@ -245,8 +225,8 @@ class SegmentManager {
    return 3600*Double.parseDouble(hms[0]) + 60*Double.parseDouble(hms[1]) + Double.parseDouble(hms[2]);
  }
  // used to get the tags from srt file for each segment
- private ArrayList<String> extractTagsFromString(String tagsString) {
-   ArrayList<String> tags = new ArrayList<String>();
+ private StringList extractTagsFromString(String tagsString) {
+   StringList tags = new StringList();
    
    String allTags[] = tagsString.split("-");
    for(int i = 0; i < allTags.length; i++) {
@@ -254,7 +234,7 @@ class SegmentManager {
     for(int j=0; j<classTags.length; j++) {
      classTags[j].toLowerCase();
      classTags[j] = classTags[j].replaceAll(" ", "");
-     tags.add(classTags[j]);
+     tags.append(classTags[j]);
     } 
    }
    return tags;

@@ -2,7 +2,6 @@
 import java.util.*;
 
 // Processing import
-import TUIO.*;
 import oscP5.*;
 import netP5.*;
 import processing.video.*;
@@ -14,12 +13,8 @@ import processing.video.*;
 
 SegmentManager segManager;
 String srtFilePath;
-KeywordManager kwManager;
-String keywordFilePath;
 
 // Communication variables
-TuioProcessing tuioClient;
-TuioObjectsManager tuioManager;
 OscP5 oscP5;
 NetAddress KISDapp;
 NetAddress tableApp;
@@ -49,8 +44,8 @@ DisposeHandler dh;
 
 // full screen mode
 boolean sketchFullScreen() {
-  return true;
-  //return false;
+  //return true;
+  return false;
 }
 
 // set full screen size, create instances of SegmentManager, TweetManager and Movie with their file paths
@@ -103,10 +98,7 @@ void setup() {
   
   srtFilePath = prefixFilePath + ".srt";
   segManager = new SegmentManager(srtFilePath);
-  segManager.calculateNewSegmentsList(new ArrayList<String>(), new int[0]);
-  
-  keywordFilePath = prefixFilePath + "_keywords.xml";
-  kwManager = new KeywordManager(keywordFilePath);
+  segManager.calculateNewSegmentsList(new StringList());
   
   tweetFilePath = prefixFilePath + "_tweets.txt";
   tweetManager = new TweetManager(tweetFilePath);
@@ -134,11 +126,6 @@ void setup() {
       println("sendind messages to reactable application at "+tableApp);
     }
   }
-  
-  XML tuioElement = configElement.getChild("tuiolistener");
-  tuioClient  = new TuioProcessing(this, tuioElement.getInt("port"));
-  println("listening TUIO messages from port "+tuioElement.getInt("port"));
-  tuioManager = new TuioObjectsManager();
   
   // ini users
   users = new UserKISD[6];
@@ -186,15 +173,41 @@ void draw() {
 // used for debug
 void mouseClicked()
 {
-  //for(int i=0; i<6; i++)
-  //  print(users[i]);
- //segManager.incrementCurrent();
- //if(jointAttention == 1)
-  //jointAttention = 0;
- //else {
-  //jointAttention = 1;
-  //tweetManager.nextTweet();
- //}
+
+}
+
+void keyPressed() {
+  if(key == CODED) {
+    switch(keyCode) {
+      case RIGHT:
+        segManager.goToNextSegment();
+        updateSegment();
+        break;
+      case LEFT:
+        segManager.goToPreviousSegment();
+        updateSegment();
+        break;
+      default:
+        break;
+    }
+  }
+  else {
+    switch(key) {
+      case 'p':
+        videoWasPlaying = videoPlaying;
+        welcomeTimer = millis();
+        video.loop();
+        videoPlaying = true;
+        break;
+      case 's':
+        videoWasPlaying = videoPlaying;
+        video.stop();
+        videoPlaying = false;
+        break;
+      default:
+        break;
+    }
+  }
 }
 
 public class DisposeHandler {
@@ -214,29 +227,9 @@ public class DisposeHandler {
 /************************************************************/
 /*************** Other methods         **********************/
 /************************************************************/
-void printSelectedKeywords() {
-  ArrayList<String> kw = kwManager.getSelectedKeywords();
-  String s = "";
-  for(int i=0; i<kw.size(); i++) {
-    s += " " + kw.get(i);
-  }
-  
-  int txtsize = 32;
-  int txtposY = 45;
-  int rectH = 60;
-  if(!sketchFullScreen()) {
-    txtsize = 16;
-    txtposY = 22;
-    rectH = 30;
-  }
-  fill(0);
-  rect(0, 0, width, rectH);
-  textSize(txtsize);
-  fill(220);
-  text(s, width/2, txtposY);
-}
+
 void printSegmentAnnotations() {
-  ArrayList<String> annot = segManager.getCurrentSegment().getTags();
+  StringList annot = segManager.getCurrentSegment().getKeywords();
   String s = "";
   for(int i=0; i<annot.size(); i++) {
     s += " " + annot.get(i);
@@ -258,23 +251,6 @@ void printSegmentAnnotations() {
   text(s, width/2, rectH+txtposY);
 }
 
-// to be called when the number of markers changes
-void updateKeywordList() {
-  //Vector tuioObjectList = tuioClient.getTuioObjects();
-  //int[] tagsID = new int[tuioObjectList.size()];
-  //for (int i=0;i<tuioObjectList.size();i++) {
-  //   TuioObject tobj = (TuioObject)tuioObjectList.elementAt(i);
-  //   tagsID[i] = tobj.getSymbolID();
-  // }
-  kwManager.setSelectedKeywordsFromTagIDs(tuioManager.getTagsIDs());
-  String s = "new keywords:";
-  ArrayList<String> kw = kwManager.getSelectedKeywords();
-  for(int i=0; i<kw.size(); i++) {
-    s += " " + kw.get(i); }
-  print(s+"\n");
-  segManager.calculateNewSegmentsList(kw, tuioManager.getTagsIDs());
-}
-
 void updateSegment() {
   video.jump(segManager.getCurrentSegment().getStartTime());
   
@@ -293,11 +269,11 @@ void sendNextMessage() {
 }
 
 void sendRelevanceMessage() {
-  OscMessage relevanceMessage = new OscMessage("/video/relevant_tags");
+  OscMessage relevanceMessage = new OscMessage("/video/relevant_keywords");
   relevanceMessage.add(segManager.getCurrentSegment().getRelevance());
-   ArrayList<Integer> relevantTags = segManager.getCurrentSegment().getRelevantTags();
-  for(int i=0; i<relevantTags.size(); i++) {
-    relevanceMessage.add(relevantTags.get(i));
+  StringList relevantkeywords = segManager.getCurrentSegment().getRelevantKeywords();
+  for(int i=0; i<relevantkeywords.size(); i++) {
+    relevanceMessage.add(relevantkeywords.get(i));
   }
   println("send to table: "+relevanceMessage);
   oscP5.send(relevanceMessage, tableApp);
@@ -434,66 +410,34 @@ void oscEvent(OscMessage mes) {
       users[userID-1].pushCoordXY(/* x */mes.get(2).floatValue(), /* y */mes.get(3).floatValue() * -1);
       return;
   }
+  //update keywords list comming from the reactable
+  if(mes.checkAddrPattern("/reactable/keywords")) {
+    int listSize = mes.get(0).intValue();
+    StringList newKeywords = new StringList();
+    for(int i=0; i<listSize; i++) {
+      newKeywords.append(mes.get(i+1).stringValue());
+    }
+    segManager.calculateNewSegmentsList(newKeywords);
+    segManager.goToNextSegment();
+    updateSegment();
+    return;
+  }
   
   // update reactable next / prev events
   if(mes.checkAddrPattern("/reactable/next")==true) {
     //go to next video
     segManager.goToNextSegment();
     updateSegment();
-    //send feedback message
-    OscMessage videoNextMessage = new OscMessage("/video/next");
-    oscP5.send(videoNextMessage, tableApp);
     return;
   }
   if(mes.checkAddrPattern("/reactable/prev")==true) {
     //go to previous video
     segManager.goToPreviousSegment();
     updateSegment();
-    //send feedback message
-    OscMessage videoPrevMessage = new OscMessage("/video/prev");
-    oscP5.send(videoPrevMessage, tableApp);
     return;
   }
 }
 
-
-// these callback methods are called whenever a TUIO event occurs
-// called when an object is added to the scene
-void addTuioObject(TuioObject tobj) {
-  //println("add object "+tobj.getSymbolID()+" ("+tobj.getSessionID()+") "+tobj.getX()+" "+tobj.getY()+" "+tobj.getAngle());  
-  tuioManager.pushObjects(tuioClient.getTuioObjects());
-  if(tuioManager.isRealEvent()) {
-    updateKeywordList();
-    updateSegment();
-  }
-}
-
-// called when an object is removed from the scene
-void removeTuioObject(TuioObject tobj) {
-  //println("remove object "+tobj.getSymbolID()+" ("+tobj.getSessionID()+")");
-  tuioManager.pushObjects(tuioClient.getTuioObjects());
-  if(tuioManager.isRealEvent()) {
-    updateKeywordList();
-    updateSegment();
-  }
-}
-
-// called when an object is moved
-void updateTuioObject (TuioObject tobj) {
-  //println("update object "+tobj.getSymbolID()+" ("+tobj.getSessionID()+") "+tobj.getX()+" "+tobj.getY()+" "+tobj.getAngle()
-  //        +" "+tobj.getMotionSpeed()+" "+tobj.getRotationSpeed()+" "+tobj.getMotionAccel()+" "+tobj.getRotationAccel());
-}
-
-// unused but necessary
-void addTuioCursor(TuioCursor tcur) {}
-void removeTuioCursor(TuioCursor tcur) {}
-void updateTuioCursor(TuioCursor tcur) {}
-
-// called after each message bundle
-// representing the end of an image frame
-void refresh(TuioTime bundleTime) { 
-  redraw();
-}
 
 void movieEvent(Movie m) {
   m.read();

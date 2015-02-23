@@ -7,9 +7,9 @@
   private int indexInFile, rate;
   private float startTime, endTime;
   private int relevance;
-  private ArrayList<String> tags;
+  private StringList annotKeywords;
   private String[] segmentStrings;
-  private ArrayList<Integer> relevantTags;
+  private StringList relevantKeywords;
   
   
   // constructor by default
@@ -18,9 +18,9 @@
     rate = 1;
     startTime = (float)0.0;
     endTime = (float)0.0;
-    tags = new ArrayList<String>();
+    annotKeywords = new StringList();
     segmentStrings = new String[3];
-    relevantTags = new  ArrayList<Integer>();
+    relevantKeywords = new  StringList();
   }
   
   // constructor with all fields
@@ -28,7 +28,7 @@
                   int p_rate, 
                   double p_start, 
                   double p_end,
-                  ArrayList<String> p_tags,
+                  StringList p_annotations,
                   String[] segStrings) {
     indexInFile = p_index;
     rate = p_rate;
@@ -37,11 +37,11 @@
     
     segmentStrings = segStrings;
     
-    tags = new ArrayList<String>();
-    for(int i=0; i<p_tags.size(); i++)
-      tags.add(p_tags.get(i));      
+    annotKeywords = new StringList();
+    for(int i=0; i<p_annotations.size(); i++)
+      annotKeywords.append(p_annotations.get(i));      
     //System.out.println(this.toString());
-    relevantTags = new  ArrayList<Integer>();
+    relevantKeywords = new  StringList();
   }
    
    // re-convert the Segment object to a srt-type string for saving
@@ -75,26 +75,26 @@
      return relevance;
    }
    
-   public  ArrayList<Integer> getRelevantTags() {
-     return relevantTags;
+   public  StringList getRelevantKeywords() {
+     return relevantKeywords;
    }
    
-   public ArrayList<String> getTags() {
-     return tags;
+   public StringList getKeywords() {
+     return annotKeywords;
    }
    
    // return the relevance of this segment in relation with the list of chosen tags
-   public int calculateRelevance(ArrayList<String> p_newTags, int[] p_ids) {
+   public int calculateRelevance(StringList selectedKeywords) {
      // TODO : 
      //      calculate and update relevance
      
      // simple version
      relevance = 0;
-     relevantTags.clear();
-     for(int i=0; i<p_newTags.size(); i++) {
-       if(tags.contains(p_newTags.get(i))) {
+     relevantKeywords.clear();
+     for(int i=0; i<selectedKeywords.size(); i++) {
+       if(annotKeywords.hasValue(selectedKeywords.get(i))) {
          relevance++;
-         relevantTags.add(p_ids[i]);
+         relevantKeywords.append(selectedKeywords.get(i));
        }
      }
      if(relevance > 3)

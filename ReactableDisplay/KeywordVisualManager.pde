@@ -67,6 +67,14 @@ public class KeywordVisualManager {
     }
   }
   
+  public void setActiveKeywords(StringList newActiveKeywords) {
+    for(int i=0; i<keywordVisuals.size(); i++) {
+      keywordVisuals.get(i).setActive(false);
+      if(newActiveKeywords.hasValue(keywordVisuals.get(i).getKeyword()))
+        keywordVisuals.get(i).setActive(true);
+    }
+  }
+  
   public void drawKeywords(PGraphics screen, boolean applyFilter) {
     for (int i=0;i<tuioObjects.size();i++) {      
       TuioObject tobj = (TuioObject)tuioObjects.elementAt(i);     

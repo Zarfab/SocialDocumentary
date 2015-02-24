@@ -52,6 +52,10 @@ class ToogleButton {
     isDown = newState;
   }
   
+  public boolean getState() {
+    return isDown;
+  }
+  
   public boolean isPressed(float cursorX, float cursorY) {
     boolean pressed = false;
     if (cursorX < position.x+size.x/2 &&

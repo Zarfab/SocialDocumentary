@@ -30,6 +30,7 @@ String videoFilePath;
 boolean videoPlaying;
 boolean videoWasPlaying;
 int welcomeTimer;
+boolean nextOrPrevCommand = false;
 
 // Tweets
 TweetManager tweetManager;
@@ -161,7 +162,7 @@ void draw() {
     tweetManager.printTweet();
   }
   
-  if(video.time() > segManager.getCurrentSegment().getEndTime()) {
+  if(video.time() > segManager.getCurrentSegment().getEndTime() && !nextOrPrevCommand) {
     segManager.goToNextSegment();
     updateSegment();
   }
@@ -181,10 +182,12 @@ void keyPressed() {
     switch(keyCode) {
       case RIGHT:
         segManager.goToNextSegment();
+        nextOrPrevCommand = true;
         updateSegment();
         break;
       case LEFT:
         segManager.goToPreviousSegment();
+        nextOrPrevCommand = true;
         updateSegment();
         break;
       default:
@@ -261,6 +264,7 @@ void updateSegment() {
   
   sendRelevanceMessage();
   sendNextMessage();
+  nextOrPrevCommand = false;
 }
 
 void sendNextMessage() {
@@ -275,7 +279,7 @@ void sendRelevanceMessage() {
   for(int i=0; i<relevantkeywords.size(); i++) {
     relevanceMessage.add(relevantkeywords.get(i));
   }
-  println("send to table: "+relevanceMessage);
+  //println("send to table: "+relevanceMessage);
   oscP5.send(relevanceMessage, tableApp);
 }
 
@@ -419,6 +423,7 @@ void oscEvent(OscMessage mes) {
     }
     segManager.calculateNewSegmentsList(newKeywords);
     segManager.goToNextSegment();
+    nextOrPrevCommand = true;
     updateSegment();
     return;
   }
@@ -427,12 +432,14 @@ void oscEvent(OscMessage mes) {
   if(mes.checkAddrPattern("/reactable/next")==true) {
     //go to next video
     segManager.goToNextSegment();
+    nextOrPrevCommand = true;
     updateSegment();
     return;
   }
   if(mes.checkAddrPattern("/reactable/prev")==true) {
     //go to previous video
     segManager.goToPreviousSegment();
+    nextOrPrevCommand = true;
     updateSegment();
     return;
   }

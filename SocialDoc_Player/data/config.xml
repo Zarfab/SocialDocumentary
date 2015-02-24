@@ -2,5 +2,6 @@
 <config>
    <osclistener port="12000" />
    <oscsender dest="KISD" address="127.0.0.1" port="12001" />
+   <!--<oscsender dest="table" address="169.254.156.102" port="11999" />-->
    <oscsender dest="table" address="127.0.0.1" port="11999" />
 </config>

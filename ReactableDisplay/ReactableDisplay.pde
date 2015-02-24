@@ -3,7 +3,6 @@ import java.util.Vector;      //
 import oscP5.*;               //OSC library
 import netP5.*;               //OSC
 import deadpixel.keystone.*;  //projection mapping library
-import controlP5.*;           //button interface
 
 // calibration and projection mapping
 Keystone ks;
@@ -40,8 +39,8 @@ int videoRelevance = 0;
 boolean forceImageUpdate = false;
 
 boolean sketchFullScreen(){
-  return true;
-  //return false;
+  //return true;
+  return false;
 }
 
 void setup()
@@ -216,27 +215,51 @@ void draw()
 }
 
 void keyPressed() {
-  switch(key) {
-  case 'f':
-    // toogle finger tracking
-    fingerTracking = !fingerTracking;
-    break;
-  case 'c':
-    // enter/leave calibration mode, where surfaces can be warped 
-    // and moved
-    ks.toggleCalibration();
-    calibrationMode = !calibrationMode;
-    break;
+  if(key == CODED) {
+    switch(keyCode) {
+      case RIGHT:
+        if(!nextButton.getState()) {
+          nextButton.setState(true);
+          //send next message over OSC
+          OscMessage nextMessage = new OscMessage("/reactable/next");
+          oscP5.send(nextMessage, playerAddress);
+        }
+        break;
+      case LEFT:
+        if(!prevButton.getState()) {
+          prevButton.setState(true);
+          //send prev message over OSC
+          OscMessage prevMessage = new OscMessage("/reactable/prev");
+          oscP5.send(prevMessage, playerAddress);
+        }
+        break;
+      default:
+        break;
+    }
+  }
+  else {
+    switch(key) {
+    case 'f':
+      // toogle finger tracking
+      fingerTracking = !fingerTracking;
+      break;
+    case 'c':
+      // enter/leave calibration mode, where surfaces can be warped 
+      // and moved
+      ks.toggleCalibration();
+      calibrationMode = !calibrationMode;
+      break;
 
-  case 'l':
-    // loads the saved layout
-    ks.load();
-    break;
+    case 'l':
+      // loads the saved layout
+      ks.load();
+      break;
 
-  case 's':
-    // saves the layout
-    ks.save();
-    break;
+    case 's':
+      // saves the layout
+      ks.save();
+      break;
+    }
   }
 }
 
